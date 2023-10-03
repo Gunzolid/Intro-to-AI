@@ -1,0 +1,11 @@
+def Checkroom(Room):
+    flour = 0
+    for row in Room:
+        flour ++
+        for col in row:
+            To_clean
+
+Room = [[2,5,'E',4,3],
+        [4,5,'E',3,0],]
+        
+Checkroom(Room)
