@@ -1,78 +1,75 @@
-def clean_room(floor, room_number, elevator_position):
-    # Calculate the actual room number considering the elevator
-    actual_room_number = room_number if room_number < elevator_position else room_number + 1
+def calculate_cleaning_time(hotel):
+    total_cleaning_time = 0
 
-    # Check if the room number is valid
-    if actual_room_number >= len(floor):
-        print(f"Room {actual_room_number + 1} is not a valid room on this floor.")
-        return 0  # Return 0 cleaning time for an invalid room
+    for floor_number, floor in enumerate(hotel):
+        elevator_position = floor.index(-1)  # ตำแหน่งลิฟต์
 
-    occupants = floor[actual_room_number]  # Number of people in the room
-    if occupants == 0:
-        print(f"Room {actual_room_number + 1} is empty. No cleaning needed.")
-        return 0  # Return 0 cleaning time for an empty room
-    else:
-        cleaning_time = 20 + (2 * occupants)  # Calculate cleaning time
-        print(f"Cleaning Room {actual_room_number + 1} (Occupants: {occupants}) on this floor. Cleaning time: {cleaning_time} minutes.")
-        return cleaning_time  # Return the cleaning time for the room
+        # คำนวณเวลาทำความสะอาดสำหรับแต่ละห้องในชั้น
+        left_rooms_to_clean = []
+        right_rooms_to_clean = []
 
+        # กำหนดด้านที่ใช้เวลาทำความสะอาดน้อยที่สุด
+        shortest_path = ""
+        if elevator_position != 0 and elevator_position != len(floor) - 1:
+            left_time = 0
+            right_time = 0
 
-def clean_floor(hotel, floor_number, elevator_position):
-    print(f"\nCleaning floor {floor_number}:")
-    total_cleaning_time = 0  # Total cleaning time for this floor
+            # คำนวณเวลาทำความสะอาดสำหรับห้องทางด้านซ้ายของลิฟต์
+            for room_number, occupants in enumerate(floor[:elevator_position]):
+                if room_number != elevator_position and occupants > 0:
+                    cleaning_time = 20 + (2 * occupants)
+                    left_time += cleaning_time
+                    left_rooms_to_clean.append((room_number, cleaning_time))
 
-    # If cleaning a floor other than the 0th floor, add elevator travel time
-    if floor_number > 0:
-        print("Taking the elevator...")
-        total_cleaning_time += 120  # Add elevator travel time (2 minutes)
+            # คำนวณเวลาทำความสะอาดสำหรับห้องทางด้านขวาของลิฟต์
+            for room_number, occupants in enumerate(floor[elevator_position + 1:]):
+                if occupants > 0:
+                    cleaning_time = 20 + (2 * occupants)
+                    right_time += cleaning_time
+                    right_rooms_to_clean.append((room_number + elevator_position + 1, cleaning_time))
 
-    # If cleaning the 2nd floor or higher, start walking from the elevator
-    if floor_number >= 2:
-        print("Starting to walk from the elevator...")
-        total_cleaning_time += 10 * elevator_position  # Walking time from elevator
+            shortest_path = "left" if left_time <= right_time else "right"
+            shortest_time = min(left_time, right_time)
 
-    # Iterate through each room on the floor
-    for room_number in range(len(hotel[floor_number])):
-        room_cleaning_time = clean_room(hotel[floor_number], room_number, elevator_position)
-        total_cleaning_time += room_cleaning_time * 60  # Add cleaning time in seconds
-        # Add walking time (10 seconds) between rooms
-        total_cleaning_time += 10 * abs(room_number - elevator_position)
+            # เรียงลำดับห้องที่ต้องทำความสะอาดในแต่ละด้านตามหมายเลขห้อง
+            left_rooms_to_clean.sort(key=lambda x: x[0])
+            right_rooms_to_clean.sort(key=lambda x: x[0])
 
-    # Calculate the time to walk back to the elevator after cleaning the floor
-    walk_to_elevator_time = 10 * abs(room_number - elevator_position)
-    print(f"Time to walk back to the elevator: {walk_to_elevator_time} seconds")
+        # คำนวณเวลาทำความสะอาดรวมสำหรับชั้นนี้
+        total_floor_cleaning_time = left_time + right_time
 
-    # Update the elevator position to move to the next floor
-    if floor_number < len(hotel) - 1:
-        elevator_position = len(hotel[floor_number + 1]) // 2
+        # เพิ่มเวลาทำความสะอาดรวมสำหรับโรงแรมทั้งหมด
+        total_cleaning_time += total_floor_cleaning_time
 
-    # Add the time to walk back to the elevator before proceeding to the next floor
-    total_cleaning_time += walk_to_elevator_time
+        print(f"\nแผนการทำความสะอาดสำหรับชั้น {floor_number + 1}:")
+        if shortest_path == "left":
+            print("ลำดับการทำความสะอาดสำหรับด้านซ้าย:")
+            for room_number, cleaning_time in left_rooms_to_clean:
+                print(f"ห้อง {room_number + 1}: เวลาทำความสะอาด - {cleaning_time} นาที")
+            print("ลำดับการทำความสะอาดสำหรับด้านขวา:")
+            for room_number, cleaning_time in right_rooms_to_clean:
+                print(f"ห้อง {room_number + 1}: เวลาทำความสะอาด - {cleaning_time} นาที")
+        else:
+            print("ลำดับการทำความสะอาดสำหรับด้านขวา:")
+            for room_number, cleaning_time in right_rooms_to_clean:
+                print(f"ห้อง {room_number + 1}: เวลาทำความสะอาด - {cleaning_time} นาที")
+            print("ลำดับการทำความสะอาดสำหรับด้านซ้าย:")
+            for room_number, cleaning_time in left_rooms_to_clean:
+                print(f"ห้อง {room_number + 1}: เวลาทำความสะอาด - {cleaning_time} นาที")
 
-    return total_cleaning_time, elevator_position
- 
+        print(f"เส้นทางทำความสะอาดที่สั้นที่สุด: ด้าน {shortest_path}")
+        print(f"เวลาการทำงานสำหรับเส้นทางที่สั้นที่สุด: {shortest_time} นาที")
+        print(f"เวลาทำความสะอาดรวมสำหรับชั้น: {total_floor_cleaning_time} นาที")
 
-def clean_hotel(hotel):
-    total_cleaning_time = 0  # Total cleaning time across all floors
-    elevator_position = len(hotel[0]) // 2  # Initial elevator position on the first floor
+    print(f"\nเวลาทำความสะอาดรวมสำหรับโรงแรมทั้งหมด: {total_cleaning_time} นาที")
 
-    # Iterate through each floor of the hotel
-    for floor_number in range(len(hotel)):
-        # Clean the current floor and get the time to walk back to the elevator
-        floor_cleaning_time, elevator_position = clean_floor(hotel, floor_number, elevator_position)
-        total_cleaning_time += floor_cleaning_time
+# ตัวอย่างโรงแรมที่มี 5 ชั้นและ 5 ห้องในแต่ละชั้น
+hotel = [
+    [1, 3, -1, 2, 4],
+    [2, 5, -1, 4, 1],
+    [4, 2, -1, 1, 3],
+    [0, 0, -1, 2, 3],
+    [1, 4, -1, 0, 1]
+]
 
-    # Convert total cleaning time to hours, minutes, and seconds
-    hours, remainder = divmod(total_cleaning_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    print(f"\nTotal cleaning time for the entire hotel: {hours} hours, {minutes} minutes, {seconds} seconds")
-
-
-# Example hotel with 3 floors and 5 rooms on each floor
-hotel = [[2, 3, 'E', 5, 0],
-         [4, 3, 'E', 2, 1],
-         [0, 5, 'E', 1, 0]]
-
-# Clean the hotel
-clean_hotel(hotel)
+calculate_cleaning_time(hotel)
